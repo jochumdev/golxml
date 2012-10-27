@@ -33,5 +33,5 @@ Run the tests
 
 ### TODO list
 
-	* Add "omitempty" support
-	* Add support for gccgo
+* Add "omitempty" support
+* Add support for gccgo
