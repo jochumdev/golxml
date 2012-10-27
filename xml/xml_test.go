@@ -201,8 +201,7 @@ func (s *lXMLSuite) TestUnmarshalPaths(c *C) {
 	}
 }
 
-const atomFeedString = `
-<?xml version="1.0" encoding="utf-8"?>
+const atomFeedString = `<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-us" updated="2009-10-04T01:35:58+00:00"><title>Code Review - My issues</title><link href="http://codereview.appspot.com/" rel="alternate"></link><link href="http://codereview.appspot.com/rss/mine/rsc" rel="self"></link><id>http://codereview.appspot.com/</id><author><name>rietveld&lt;&gt;</name></author><entry><title>rietveld: an attempt at pubsubhubbub
 </title><link href="http://codereview.appspot.com/126085" rel="alternate"></link><updated>2009-10-04T01:35:58+00:00</updated><author><name>email-address-removed</name></author><id>urn:md5:134d9179c41f806be79b3a5f7877d19a</id><summary type="html">
   An attempt at adding pubsubhubbub support to Rietveld.
@@ -300,6 +299,8 @@ func ParseTime(str string) time.Time {
 }
 
 var atomFeed = Feed{
+	// TODO: Fix namespace support.
+	// XMLName: Name{"http://www.w3.org/2005/Atom", "feed"},
 	Title: "Code Review - My issues",
 	Link: []Link{
 		{Rel: "alternate", Href: "http://codereview.appspot.com/"},
@@ -308,7 +309,8 @@ var atomFeed = Feed{
 	Id:      "http://codereview.appspot.com/",
 	Updated: ParseTime("2009-10-04T01:35:58+00:00"),
 	Author: Person{
-		Name: "rietveld<>",
+		Name:     "rietveld<>",
+		InnerXML: "<name>rietveld&lt;&gt;</name>",
 	},
 	Entry: []Entry{
 		{
@@ -318,7 +320,8 @@ var atomFeed = Feed{
 			},
 			Updated: ParseTime("2009-10-04T01:35:58+00:00"),
 			Author: Person{
-				Name: "email-address-removed",
+				Name:     "email-address-removed",
+				InnerXML: "<name>email-address-removed</name>",
 			},
 			Id: "urn:md5:134d9179c41f806be79b3a5f7877d19a",
 			Summary: Text{
@@ -364,7 +367,8 @@ the top of feeds.py marked NOTE(rsc).
 			},
 			Updated: ParseTime("2009-10-03T23:02:17+00:00"),
 			Author: Person{
-				Name: "email-address-removed",
+				Name:     "email-address-removed",
+				InnerXML: "<name>email-address-removed</name>",
 			},
 			Id: "urn:md5:0a2a4f19bb815101f0ba2904aed7c35a",
 			Summary: Text{

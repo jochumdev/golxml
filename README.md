@@ -19,7 +19,7 @@ Install with **go get** (make sure **$GOPATH** is not set to install in **$GOROO
 	$ go get -u github.com/pcdummy/golxml/xml (-u flag for "update")
 
 
-Run the tests (atom tests will fail)
+Run the tests
 
 	$ cd $GOROOT/src/pkg/github.com/pcdummy/golxml/xml
 	$ go test *.go
@@ -28,16 +28,10 @@ Run the tests (atom tests will fail)
 ### Known issues
 
 * No namespace support
-* No "innerxml" support
-* No "chardata" support
 * No "omitempty" support
 * Gokogiri does not compile with gccgo
 
-### Roadmap
+### TODO list
 
-- v0.2
-	* Add "innerxml,chardata,omitempty" support
-	* Fix all tests
-
-- v0.3
+	* Add "omitempty" support
 	* Add support for gccgo

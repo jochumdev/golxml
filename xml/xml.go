@@ -7,13 +7,38 @@ package xml
 import (
 	"encoding/xml"
 	"errors"
-	// "fmt"
-	//"github.com/kicool/kicool.go/dump"
 	gokoxml "github.com/moovweb/gokogiri/xml"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+)
+
+// TODO: Remove these once https://github.com/moovweb/gokogiri/pull/12 gets accepted.
+const (
+	XML_PARSE_RECOVER    = 1 << 0  // recover on errors
+	XML_PARSE_NOENT      = 1 << 1  // substitute entities
+	XML_PARSE_DTDLOAD    = 1 << 2  // load the external subset
+	XML_PARSE_DTDATTR    = 1 << 3  // default DTD attributes
+	XML_PARSE_DTDVALID   = 1 << 4  // validate with the DTD
+	XML_PARSE_NOERROR    = 1 << 5  // suppress error reports
+	XML_PARSE_NOWARNING  = 1 << 6  // suppress warning reports
+	XML_PARSE_PEDANTIC   = 1 << 7  // pedantic error reporting
+	XML_PARSE_NOBLANKS   = 1 << 8  // remove blank nodes
+	XML_PARSE_SAX1       = 1 << 9  // use the SAX1 interface internally
+	XML_PARSE_XINCLUDE   = 1 << 10 // Implement XInclude substitition
+	XML_PARSE_NONET      = 1 << 11 // Forbid network access
+	XML_PARSE_NODICT     = 1 << 12 // Do not reuse the context dictionnary
+	XML_PARSE_NSCLEAN    = 1 << 13 // remove redundant namespaces declarations
+	XML_PARSE_NOCDATA    = 1 << 14 // merge CDATA as text nodes
+	XML_PARSE_NOXINCNODE = 1 << 15 // do not generate XINCLUDE START/END nodes
+	XML_PARSE_COMPACT    = 1 << 16 // compact small text nodes; no modification of the tree allowed afterwards (will possibly crash if you try to modify the tree)
+	XML_PARSE_OLD10      = 1 << 17 // parse using XML-1.0 before update 5
+	XML_PARSE_NOBASEFIX  = 1 << 18 // do not fixup XINCLUDE xml:base uris
+	XML_PARSE_HUGE       = 1 << 19 // relax any hardcoded limit from the parser
+	XML_PARSE_OLDSAX     = 1 << 20 // parse using SAX2 interface before 2.7.0
+	XML_PARSE_IGNORE_ENC = 1 << 21 // ignore internal document encoding hint
+	XML_PARSE_BIG_LINES  = 1 << 22 // Store big lines numbers in text PSVI field
 )
 
 var timeType = reflect.TypeOf(time.Time{})
@@ -33,7 +58,8 @@ type Decoder struct {
 
 // TODO: Make the Parser options configureable.
 func (d *Decoder) Decode(data []byte, v interface{}) error {
-	doc, err := gokoxml.Parse(data, gokoxml.DefaultEncodingBytes, nil, gokoxml.DefaultParseOption, gokoxml.DefaultEncodingBytes)
+	var opts = gokoxml.DefaultParseOption | XML_PARSE_NOENT
+	doc, err := gokoxml.Parse(data, gokoxml.DefaultEncodingBytes, nil, opts, gokoxml.DefaultEncodingBytes)
 	d.doc = doc
 	if err != nil {
 		return err
@@ -145,14 +171,33 @@ func (p *Decoder) unmarshal(val reflect.Value, start gokoxml.Node) error {
 			}
 		}
 
+		var saveComment reflect.Value
+		var doSaveComment = false
+		_ = saveComment
+
 		for i := range tinfo.fields {
 			finfo := &tinfo.fields[i]
-			if finfo.flags&fMode == fAttr {
+			switch finfo.flags & fMode {
+			case fAttr:
 				strv := sv.FieldByIndex(finfo.idx)
 				for name, a := range start.Attributes() {
 					if name == finfo.name {
 						copyValue(strv, a.Content())
 					}
+				}
+			case fCharData:
+				strv := sv.FieldByIndex(finfo.idx)
+				copyValue(strv, start.Content())
+
+			case fInnerXml:
+				strv := sv.FieldByIndex(finfo.idx)
+				// TODO: Not sure why i need to call FirstChild() here.
+				copyValue(strv, start.FirstChild().String())
+
+			case fComment:
+				if !doSaveComment {
+					doSaveComment = true
+					saveComment = sv.FieldByIndex(finfo.idx)
 				}
 			}
 		}
@@ -160,6 +205,9 @@ func (p *Decoder) unmarshal(val reflect.Value, start gokoxml.Node) error {
 		for cur_node := start.FirstChild(); cur_node != nil; cur_node = cur_node.NextSibling() {
 			if sv.IsValid() {
 				if cur_node.NodeType() != gokoxml.XML_ELEMENT_NODE {
+					if doSaveComment && cur_node.NodeType() == gokoxml.XML_COMMENT_NODE {
+						copyValue(saveComment, cur_node.Content())
+					}
 					continue
 				}
 
@@ -169,49 +217,6 @@ func (p *Decoder) unmarshal(val reflect.Value, start gokoxml.Node) error {
 				}
 			}
 		}
-
-		// Assign attributes.
-		// Also, determine whether we need to save character data or comments.
-		// for i := range tinfo.fields {
-		// 	finfo := &tinfo.fields[i]
-		// 	switch finfo.flags & fMode {
-		// 	case fAttr:
-		// 		strv := sv.FieldByIndex(finfo.idx)
-		// 		// Look for attribute.
-		// 		for _, a := range start.Attr {
-		// 			if a.Name.Local == finfo.name {
-		// 				copyValue(strv, []byte(a.Value))
-		// 				break
-		// 			}
-		// 		}
-
-		// 	case fCharData:
-		// 		if !saveData.IsValid() {
-		// 			saveData = sv.FieldByIndex(finfo.idx)
-		// 		}
-
-		// 	case fComment:
-		// 		if !saveComment.IsValid() {
-		// 			saveComment = sv.FieldByIndex(finfo.idx)
-		// 		}
-
-		// 	case fAny:
-		// 		if !saveAny.IsValid() {
-		// 			saveAny = sv.FieldByIndex(finfo.idx)
-		// 		}
-
-		// 	case fInnerXml:
-		// 		if !saveXML.IsValid() {
-		// 			saveXML = sv.FieldByIndex(finfo.idx)
-		// 			if p.saved == nil {
-		// 				saveXMLIndex = 0
-		// 				p.saved = new(bytes.Buffer)
-		// 			} else {
-		// 				saveXMLIndex = p.savedOffset()
-		// 			}
-		// 		}
-		// 	}
-		// }
 
 	} // switch v := val; v.Kind() {
 
