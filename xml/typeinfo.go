@@ -70,10 +70,14 @@ func getTypeInfo(typ reflect.Type) (*typeInfo, error) {
 
 			// For embedded structs, embed its fields.
 			if f.Anonymous {
-				if f.Type.Kind() != reflect.Struct {
+				t := f.Type
+				if t.Kind() == reflect.Ptr {
+					t = t.Elem()
+				}
+				if t.Kind() != reflect.Struct {
 					continue
 				}
-				inner, err := getTypeInfo(f.Type)
+				inner, err := getTypeInfo(t)
 				if err != nil {
 					return nil, err
 				}
