@@ -16,7 +16,7 @@ See the [tests](https://github.com/pcdummy/golxml/blob/master/xml/xml_test.go) f
 
 Install with **go get** (make sure **$GOPATH** is not set to install in **$GOROOT**)
 
-	$ go get -u github.com/pcdummy/golxml (-u flag for "update")
+	$ go get -u github.com/pcdummy/golxml/xml (-u flag for "update")
 
 
 Run the tests (atom tests will fail)
