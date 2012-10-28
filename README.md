@@ -29,7 +29,7 @@ Run the tests
 
 * No namespace support
 * No "omitempty" support
-* Gokogiri does not compile with gccgo
+* Gokogiri does not compile with gccgo, see [issue 2313](http://code.google.com/p/go/issues/detail?id=2313)
 
 ### TODO list
 
