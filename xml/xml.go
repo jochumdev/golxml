@@ -14,33 +14,6 @@ import (
 	"time"
 )
 
-// TODO: Remove these once https://github.com/moovweb/gokogiri/pull/12 gets accepted.
-const (
-	XML_PARSE_RECOVER    = 1 << 0  // recover on errors
-	XML_PARSE_NOENT      = 1 << 1  // substitute entities
-	XML_PARSE_DTDLOAD    = 1 << 2  // load the external subset
-	XML_PARSE_DTDATTR    = 1 << 3  // default DTD attributes
-	XML_PARSE_DTDVALID   = 1 << 4  // validate with the DTD
-	XML_PARSE_NOERROR    = 1 << 5  // suppress error reports
-	XML_PARSE_NOWARNING  = 1 << 6  // suppress warning reports
-	XML_PARSE_PEDANTIC   = 1 << 7  // pedantic error reporting
-	XML_PARSE_NOBLANKS   = 1 << 8  // remove blank nodes
-	XML_PARSE_SAX1       = 1 << 9  // use the SAX1 interface internally
-	XML_PARSE_XINCLUDE   = 1 << 10 // Implement XInclude substitition
-	XML_PARSE_NONET      = 1 << 11 // Forbid network access
-	XML_PARSE_NODICT     = 1 << 12 // Do not reuse the context dictionnary
-	XML_PARSE_NSCLEAN    = 1 << 13 // remove redundant namespaces declarations
-	XML_PARSE_NOCDATA    = 1 << 14 // merge CDATA as text nodes
-	XML_PARSE_NOXINCNODE = 1 << 15 // do not generate XINCLUDE START/END nodes
-	XML_PARSE_COMPACT    = 1 << 16 // compact small text nodes; no modification of the tree allowed afterwards (will possibly crash if you try to modify the tree)
-	XML_PARSE_OLD10      = 1 << 17 // parse using XML-1.0 before update 5
-	XML_PARSE_NOBASEFIX  = 1 << 18 // do not fixup XINCLUDE xml:base uris
-	XML_PARSE_HUGE       = 1 << 19 // relax any hardcoded limit from the parser
-	XML_PARSE_OLDSAX     = 1 << 20 // parse using SAX2 interface before 2.7.0
-	XML_PARSE_IGNORE_ENC = 1 << 21 // ignore internal document encoding hint
-	XML_PARSE_BIG_LINES  = 1 << 22 // Store big lines numbers in text PSVI field
-)
-
 var timeType = reflect.TypeOf(time.Time{})
 
 // An UnmarshalError represents an error in the unmarshalling process.
@@ -58,7 +31,7 @@ type Decoder struct {
 
 // TODO: Make the Parser options configureable.
 func (d *Decoder) Decode(data []byte, v interface{}) error {
-	var opts = gokoxml.DefaultParseOption | XML_PARSE_NOENT
+	var opts = gokoxml.DefaultParseOption | gokoxml.XML_PARSE_NOENT
 	doc, err := gokoxml.Parse(data, gokoxml.DefaultEncodingBytes, nil, opts, gokoxml.DefaultEncodingBytes)
 	d.doc = doc
 	if err != nil {
